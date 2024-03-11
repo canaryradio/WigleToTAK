@@ -4,7 +4,7 @@ A Python application with html dashboard designed to help use your WigleCSV crea
 For use in a non-production environment.
 Defaults are set to be run on the same server as your WigleCSV device service, however other network configurations should work. This is built with WiFi in mind, however other things in a wigleCSV format will display.
 
-Tested using Python and Python 3 with a Chrome browser.
+Tested using Python, Python 3, a Chrome browser, and Kismet.
 # Quick Start
 Step 1:
 Clone or download WigleToTAK to your computer
