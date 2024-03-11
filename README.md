@@ -36,8 +36,8 @@ Edit your kismet_logging.conf file<br>
 You could certainly do some other Kismet modifications, but location is mandatory. I highly recommend doing a test and making sure you have a configuration that results in devices populating in the .wiglecsv file. Once you think you are good you could $ cat <your_file.wiglecsv> and make sure it lists out devices.
 
   
-  
-  TAK Server IP is the IP address of your TAK Server. The port should be whichever port you have designated for input of these packets. The Broadcast button is a toggle to enable (default) or disable the multicast to 239.2.3.1:6969.
+<h2>TAK Server</h2>  
+TAK Server IP is the IP address of your TAK Server. The port should be whichever port you have designated for input of these packets. The Broadcast button is a toggle to enable (default) or disable the multicast to 239.2.3.1:6969.
 
 <img width="506" alt="Screenshot 2024-03-10 at 11 53 15 PM" src="https://github.com/SignalMedic/WigleToTAK/assets/127666889/11e3e3eb-0ebd-40e2-9853-b7c571e992bc">
 
