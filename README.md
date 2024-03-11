@@ -42,7 +42,8 @@ TAK Server IP is the IP address of your TAK Server. The port should be whichever
 <img width="506" alt="Screenshot 2024-03-10 at 11 53 15 PM" src="https://github.com/SignalMedic/WigleToTAK/assets/127666889/11e3e3eb-0ebd-40e2-9853-b7c571e992bc">
 
 
-  Wigle CSV logs directory should be your absolute path to wherever your .wiglecsv files are going to. In Kismet you can set this in the config files. I do not recommend sending to a directory owned by root or requiring sudo priveleges for this application. /home/{YOUR USER} for example is a easy choice. When you click "submit" all of the files ending with .wiglecsv will show in the drop down list. Latest will be at the top. When you click "start" the file will be read and all packets in the file will be parsed, converted to CoT XML, and sent to whatever endpoints you have enabled.
+<h2>Wigle CSV Selection</h2>
+Wigle CSV logs directory should be your absolute path to wherever your .wiglecsv files are going to. In Kismet you can set this in the config files. I do not recommend sending to a directory owned by root or requiring sudo priveleges for this application. /home/{YOUR USER} for example is a easy choice. When you click "submit" all of the files ending with .wiglecsv will show in the drop down list. Latest will be at the top. When you click "start" the file will be read and all packets in the file will be parsed, converted to CoT XML, and sent to whatever endpoints you have enabled.
   
 <img width="510" alt="Screenshot 2024-03-10 at 11 53 34 PM" src="https://github.com/SignalMedic/WigleToTAK/assets/127666889/e5bacf15-d163-4395-b63d-b34a7f420c68">
 
