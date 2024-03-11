@@ -206,4 +206,4 @@ def create_cot_xml_payload_point(mac, ssid, firstseen, channel, rssi, currentlat
     </event>'''
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000, debug=True)
+    app.run(host='0.0.0.0', port=8000, debug=False)
