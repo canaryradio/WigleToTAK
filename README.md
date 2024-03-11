@@ -6,13 +6,13 @@ A Python application with html dashboard designed to help use your WigleCSV crea
 For use in a non-production environment.
 Defaults are set to be run on the same server as your WigleCSV device service, however other network configurations should work. This is built with WiFi in mind, however other things in a wigleCSV format will display.
 
-Tested using Python 3, a Chrome browser, and Kismet.
+Tested using Python 3, a Chrome browser, Kismet, ATAK, and iTAK (the points are different, but it works).
 # Quick Start
 Step 1:
 Clone or download WigleToTAK to your computer
 
 Step 2:
-Initialize or start your WigleCSV creating service (e.g. {$ sudo kismet -t some_wardrive -c {YOUR WIFI INTERFACE} --override wardrive}). Another option is to use Wigle to TAK for post collection processing.
+Initialize or start your WigleCSV creating service<br> ``` $ sudo kismet -c {YOUR WIFI INTERFACE} --override wardrive ```<br> Another option is to use Wigle to TAK for post collection processing.
 
 Step 3:
 Navigate to the directory and start
