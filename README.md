@@ -10,14 +10,30 @@ Tested using Python 3, a Chrome browser, Kismet, ATAK, and iTAK (the points are 
 # Quick Start
 Step 1:
 Clone or download WigleToTAK to your computer
+`git clone https://github.com/canaryradio/WigleToTAK`
 
 Step 2:
 Initialize or start your WigleCSV creating service<br> ``` $ sudo kismet -c {YOUR WIFI INTERFACE} --override wardrive ```<br> Another option is to use Wigle to TAK for post collection processing.
 
 Step 3:
-Navigate to the directory and start
+Create python virtualenv OR install dependencies globally:
 ```
-$ cd WigleToTAK
+# Optional, install venv
+python3 -m virtualenv .venv
+# ensure .venv python is being used, not system
+which python3
+# prints: $ > ../WigleToTAK/.venv/bin/python3
+
+# if virtualenv is active, requirements will be installed there
+# if virtualenv is not installed, requirements will be install system wide - not recommended
+# install requirements
+pip install -r requirements.txt
+```
+
+
+Step 4:
+Start server
+```
 $ python3 WigleToTAK.py
 ```
 
