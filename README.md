@@ -33,26 +33,28 @@ Edit your kismet.conf file<br>
 Edit your kismet_logging.conf file<br>
 -I would change your log_prefix to somewhere that does not require root/sudo priveleges. I use /home/{my_username}<br>
 
-You could certainly do some other Kismet modifications, but location is mandatory. I highly recommend doing a test and making sure you have a configuration that results in devices populating in the .wiglecsv file. Once you think you are good you could $ cat <your_file.wiglecsv> and make sure it lists out devices.
+You could certainly do some other Kismet modifications, but location is mandatory. I highly recommend doing a test and making sure you have a configuration that results in devices populating in the .wiglecsv file. Once you think you are good you could $ cat <your_file.wiglecsv> and make sure it lists out devices.<br>
 
   
 <h2>TAK Server</h2>  
-TAK Server IP is the IP address of your TAK Server. The port should be whichever port you have designated for input of these packets. The Broadcast button is a toggle to enable (default) or disable the multicast to 239.2.3.1:6969.
+TAK Server IP is the IP address of your TAK Server. The port should be whichever port you have designated for input of these packets. The Broadcast button is a toggle to enable (default) or disable the multicast to 239.2.3.1:6969.<br>
 
 <img width="506" alt="Screenshot 2024-03-10 at 11 53 15 PM" src="https://github.com/SignalMedic/WigleToTAK/assets/127666889/11e3e3eb-0ebd-40e2-9853-b7c571e992bc">
 
 
 <h2>Wigle CSV Selection</h2>
-Wigle CSV logs directory should be your absolute path to wherever your .wiglecsv files are going to. In Kismet you can set this in the config files. I do not recommend sending to a directory owned by root or requiring sudo priveleges for this application. /home/{YOUR USER} for example is a easy choice. When you click "submit" all of the files ending with .wiglecsv will show in the drop down list. Latest will be at the top. When you click "start" the file will be read and all packets in the file will be parsed, converted to CoT XML, and sent to whatever endpoints you have enabled.
+Wigle CSV logs directory should be your absolute path to wherever your .wiglecsv files are going to. In Kismet you can set this in the config files. I do not recommend sending to a directory owned by root or requiring sudo priveleges for this application. /home/{YOUR USER} for example is a easy choice. When you click "submit" all of the files ending with .wiglecsv will show in the drop down list. Latest will be at the top. When you click "start" the file will be read and all packets in the file will be parsed, converted to CoT XML, and sent to whatever endpoints you have enabled.<br>
   
 <img width="510" alt="Screenshot 2024-03-10 at 11 53 34 PM" src="https://github.com/SignalMedic/WigleToTAK/assets/127666889/e5bacf15-d163-4395-b63d-b34a7f420c68">
 
 
-  MAC Whitelist is for devices that you don't want to display or don't care to display. Your own for instance. To remove one select it from the drop down and click "Remove from Whitelist".
+<h2>MAC Whitelist</h2>
+MAC Whitelist is for devices that you don't want to display or don't care to display. Your own for instance. To remove one select it from the drop down and click "Remove from Whitelist".<br>
 
 <img width="511" alt="Screenshot 2024-03-10 at 11 53 53 PM" src="https://github.com/SignalMedic/WigleToTAK/assets/127666889/643fbc22-9be6-43cb-947b-2dbd65a6b204">
 
 
-  MAC Blacklist is for devices that you want to display in a color other than the default color. You need to select a ARGB value other than -65281 (purple) because that is the default. To remove select it from the drop down and click "Remove from Blacklist".
+<h2>MAC Blacklist</h2>
+MAC Blacklist is for devices that you want to display in a color other than the default color. You need to select a ARGB value other than -65281 (purple) because that is the default. To remove select it from the drop down and click "Remove from Blacklist".<br>
 
 <img width="516" alt="Screenshot 2024-03-10 at 11 54 06 PM" src="https://github.com/SignalMedic/WigleToTAK/assets/127666889/c8e60d06-5ba6-48ff-a97c-ed7ac05dfd96">
