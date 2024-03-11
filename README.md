@@ -24,12 +24,15 @@ Open a browser and navigate to http://<YOUR_IP:8000
 
 
 # Instructions
-The Wigle to TAK application operates independent of your software or service that creates the WigleCSV file. Wigle to TAK depends on creating a file ending with .wiglecsv in the standard format.<br>Using Kismet as an example the steps to setup are:<br>
+The Wigle to TAK application operates independent of your software or service that creates the WigleCSV file. Wigle to TAK depends on creating a file ending with .wiglecsv in the standard format.<br>
+
+Using Kismet as an example the steps to setup are:<br>
 Edit your kismet.conf file<br>
 -Setup GPS for Kismet<br>
 -(optional) Setup your source (or use -c flag in your start command)<br>
 Edit your kismet_logging.conf file<br>
 -I would change your log_prefix to somewhere that does not require root/sudo priveleges. I use /home/{my_username}<br>
+
 You could certainly do some other Kismet modifications, but location is mandatory. I highly recommend doing a test and making sure you have a configuration that results in devices populating in the .wiglecsv file. Once you think you are good you could $ cat <your_file.wiglecsv> and make sure it lists out devices.
 
   
