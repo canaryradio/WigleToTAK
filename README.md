@@ -13,7 +13,7 @@ Initialize or start your WigleCSV creating service (e.g. {$ sudo kismet -t some_
 Step 3:
 Navigate to the directory and start
 ```
-$ cd Wigle-to-TAK-Python
+$ cd WigleToTAK
 $ python WigleToTAK.py
 ```
 
@@ -22,3 +22,13 @@ Open a browser and navigate to http://<YOUR_IP:8000
 
 
 # Instructions
+<img width="506" alt="Screenshot 2024-03-10 at 11 53 15 PM" src="https://github.com/SignalMedic/WigleToTAK/assets/127666889/11e3e3eb-0ebd-40e2-9853-b7c571e992bc">
+
+
+<img width="510" alt="Screenshot 2024-03-10 at 11 53 34 PM" src="https://github.com/SignalMedic/WigleToTAK/assets/127666889/e5bacf15-d163-4395-b63d-b34a7f420c68">
+
+
+<img width="511" alt="Screenshot 2024-03-10 at 11 53 53 PM" src="https://github.com/SignalMedic/WigleToTAK/assets/127666889/643fbc22-9be6-43cb-947b-2dbd65a6b204">
+
+
+<img width="516" alt="Screenshot 2024-03-10 at 11 54 06 PM" src="https://github.com/SignalMedic/WigleToTAK/assets/127666889/c8e60d06-5ba6-48ff-a97c-ed7ac05dfd96">
