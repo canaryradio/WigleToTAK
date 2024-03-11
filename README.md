@@ -5,7 +5,7 @@ Defaults are set to be run on the same server as your WigleCSV device service, h
 Tested using Python and Python 3 with a Chrome browser.
 # Quick Start
 Step 1:
-Clone or download Wigle-to-TAK-Python to your computer
+Clone or download WigleToTAK to your computer
 
 Step 2:
 Initialize or start your WigleCSV creating service (e.g. {$ sudo kismet -t some_wardrive -c wlp3s0 --override wardrive}). Another option is to use this for post collection processing.
