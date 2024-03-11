@@ -10,7 +10,7 @@ Step 1:
 Clone or download WigleToTAK to your computer
 
 Step 2:
-Initialize or start your WigleCSV creating service (e.g. {$ sudo kismet -c {YOUR WIFI INTERFACE} --override wardrive}). Another option is to use Wigle to TAK for post collection processing.
+Initialize or start your WigleCSV creating service<br> ``` $ sudo kismet -c {YOUR WIFI INTERFACE} --override wardrive ```<br> Another option is to use Wigle to TAK for post collection processing.
 
 Step 3:
 Navigate to the directory and start
