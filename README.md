@@ -2,6 +2,8 @@
 
 If you find issues please make a ticket using the GitHub Issue tracker for the repo.<br>
 
+If you are running this as part of a post collection activity with more than ~250 devices in the wiglecsv file you may experience some of the packets falling off depending on your network rules. If this is a limitation in your mind please create a ticket in the Issues section of the repo.<br>
+
 A Python application with html dashboard designed to help use your WigleCSV creating service with TAK products.
 For use in a non-production environment.
 Defaults are set to be run on the same server as your WigleCSV device service, however other network configurations should work. This is built with WiFi in mind, however other things in a wigleCSV format will display.
