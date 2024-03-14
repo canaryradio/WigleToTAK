@@ -2,6 +2,8 @@
 
 <br>Basic demonstration of Wigle To TAK https://www.youtube.com/watch?v=msWT8neQEdY<br>
 
+<br>Cemaxecuter has done a much more comprehensive, but easy to follow, video illustrating setup and use of Wigle To TAK https://www.youtube.com/watch?v=FBVEbkGHQsE&t=29s<br>
+
 If you find issues please make a ticket using the GitHub Issue tracker for the repo.<br>
 
 If you are running this as part of a **post collection** activity with **more than ~250 devices** in the wiglecsv file you may experience some of the packets falling off depending on your network rules. If this is a limitation in your mind please create a ticket in the Issues section of the repo.<br>
