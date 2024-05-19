@@ -48,17 +48,20 @@
             color: white;
         }
 
-        #takMulticastToggle {
+        #takMulticastToggle,
+        #analysisModeToggle {
             font-size: 18px;
             width: 200px;
         }
 
-        #takMulticastToggle.true-state {
+        #takMulticastToggle.true-state,
+        #analysisModeToggle.realtime-state {
             background-color: green;
             color: whitesmoke;
         }
 
-        #takMulticastToggle.false-state {
+        #takMulticastToggle.false-state,
+        #analysisModeToggle.postcollection-state {
             background-color: red;
             color: whitesmoke;
         }
@@ -151,8 +154,10 @@
                         <!-- Options populate dynamically -->
                     </select>
                     <button type="submit">Start</button>
+                    <button id="stopBroadcastButton" class="stop-button" type="button">Stop</button>
                 </form>
-                <button id="stopBroadcastButton" class="stop-button" type="button">Stop</button>
+                <label for="analysisModeToggle">Analysis Mode</label>
+                <button id="analysisModeToggle" class="realtime-state">Real-time</button>
             </div>
             <div class="group-container">
                 <label for="macWhitelistInput">MAC Whitelist:</label>
@@ -198,6 +203,7 @@
             - Select the WigleCSV that you would like to parse and display to your TAK client(s).
             <div>- The start button will begin the parse-send loop.</div>
             <div>- The stop button will terminate the parse-send loop.</div>
+            <div>- The default Analysis Mode is Real-Time. If processing large files in a post-collection situation toggle to Post-Collection.</div>
             </div>
             <div class="line-item-wigleWhitelist">
                 - MAC Whitelist is a field to enter MAC addresses you do not want to display.
@@ -209,193 +215,169 @@
                 <div>* -65536 is red.</div>
                 <div>* -16776961 is blue.</div>
                 <div>* -23296 is orange.</div>
-                <div>- You can do other colors too. Easiest to look at the spot map dropper to see which colors are suppored in your TAK client.</div>
+                <div>- You can do other colors too. Easiest to look at the spot map dropper to see which colors are supported in your TAK client.</div>
             </div>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Initialize TAK Multicast toggle state
-            var takMulticastToggle = true;
-            var button = document.getElementById("takMulticastToggle");
-            button.addEventListener("click", function () {
-                takMulticastToggle = !takMulticastToggle;
-                // Set button class based on initial state
-                if (takMulticastToggle) {
-                    button.classList.add("true-state");
-                    button.classList.remove("false-state");
-                    button.innerHTML = "Broadcasting";
-                } else {
-                    button.classList.add("false-state");
-                    button.classList.remove("true-state");
-                    button.innerHTML = "Not sending multicast";
-                }
-    
-                // Send the updated state to the server
-                fetch('/update_settings', {
-                    method: 'POST',
+            // Helper function to send fetch request
+            function sendFetch(url, method, body) {
+                return fetch(url, {
+                    method: method,
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ takMulticast: takMulticastToggle })
+                    body: JSON.stringify(body)
                 })
                 .then(response => {
                     if (response.ok) {
-                        return response.text(); // If response is OK, return the response text
+                        return response.json();
                     } else {
-                        throw new Error('Error: ' + response.statusText); // Otherwise, throw an error
+                        throw new Error('Error: ' + response.statusText);
                     }
-                })
-                .then(data => {
-                    console.log(data); // Log the response data
-                    alert("Settings updated successfully!"); // Display success message
-                })
-                .catch(error => {
-                    console.error('Error:', error); // Log any errors that occur
-                    alert("Error: " + error.message); // Display error message
                 });
+            }
+
+            // Initialize TAK Multicast toggle state
+            var takMulticastToggle = true;
+            var multicastButton = document.getElementById("takMulticastToggle");
+            multicastButton.addEventListener("click", function () {
+                takMulticastToggle = !takMulticastToggle;
+                if (takMulticastToggle) {
+                    multicastButton.classList.add("true-state");
+                    multicastButton.classList.remove("false-state");
+                    multicastButton.innerHTML = "Broadcasting";
+                } else {
+                    multicastButton.classList.add("false-state");
+                    multicastButton.classList.remove("true-state");
+                    multicastButton.innerHTML = "Not sending multicast";
+                }
+                sendFetch('/update_settings', 'POST', { takMulticast: takMulticastToggle })
+                    .then(data => {
+                        console.log(data);
+                        alert("Settings updated successfully!");
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert("Error: " + error.message);
+                    });
             });
-    
+
+            // Initialize Analysis Mode toggle state
+            var analysisMode = 'realtime';
+            var analysisModeButton = document.getElementById("analysisModeToggle");
+            analysisModeButton.addEventListener("click", function () {
+                if (analysisMode === 'realtime') {
+                    analysisMode = 'postcollection';
+                    analysisModeButton.classList.add("postcollection-state");
+                    analysisModeButton.classList.remove("realtime-state");
+                    analysisModeButton.innerHTML = "Post-collection";
+                } else {
+                    analysisMode = 'realtime';
+                    analysisModeButton.classList.add("realtime-state");
+                    analysisModeButton.classList.remove("postcollection-state");
+                    analysisModeButton.innerHTML = "Real-time";
+                }
+                sendFetch('/update_settings', 'POST', { mode: analysisMode })
+                    .then(data => {
+                        console.log(data);
+                        alert("Analysis mode updated successfully!");
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert("Error: " + error.message);
+                    });
+            });
+
             // Function to save TAK Server IP and Port
             var saveTakStuff = function () {
                 var newTAKServerIP = document.getElementById("takServerIpInput").value;
                 var newTAKServerPort = document.getElementById("takServerPortInput").value;
-    
-                // Check if both TAK Server IP and Port are provided and are valid integers
                 if (newTAKServerIP.trim() !== "" && /^\d+$/.test(newTAKServerPort.trim())) {
-    
-                    // Send data as JSON to the server for updating settings
-                    fetch('/update_settings', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ tak_server_ip: newTAKServerIP, tak_server_port: newTAKServerPort })
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            return response.text(); // If response is OK, return the response text
-                        } else {
-                            throw new Error('Error: ' + response.statusText); // Otherwise, throw an error
-                        }
-                    })
-                    .then(data => {
-                        console.log(data); // Log the response data
-                        alert("TAK Server IP and Port updated successfully!"); // Display success message
-                    })
-                    .catch(error => {
-                        console.error('Error:', error); // Log any errors that occur
-                        alert("Error: " + error.message); // Display error message
-                    });
-    
+                    sendFetch('/update_settings', 'POST', { tak_server_ip: newTAKServerIP, tak_server_port: newTAKServerPort })
+                        .then(data => {
+                            console.log(data);
+                            alert("TAK Server IP and Port updated successfully!");
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert("Error: " + error.message);
+                        });
                 } else {
-                    // Display an alert if either TAK Server IP or Port is missing or invalid
                     alert("Please enter both a valid TAK Server IP and Port before saving.");
                 }
             }
-    
-            // Event listener for Save TAK Server IP and Port button
             document.getElementById("saveTAKServerButton").addEventListener("click", saveTakStuff);
-    
-    
+
             // Event listener for "Start" button
             document.getElementById("selectFileForm").addEventListener("submit", function(event) {
-                event.preventDefault(); // Prevent default form submission
+                event.preventDefault();
                 var directoryPath = document.getElementById("directory").value;
-                var selectedFilename = document.getElementById("selectWigle").value; // Get selected filename
-                console.log("Selected filename:", selectedFilename); // Log selected filename
-                if (selectedFilename && directoryPath) { // Check if both directory and filename are available
-                    // Construct full file path
-                    var fullFilePath = directoryPath + "/" + selectedFilename;
-                    console.log("Full file path:", fullFilePath); // Log full file path
-                    // Send the full file path to the backend
-                    fetch('/start_broadcast', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ filename: selectedFilename, directory: directoryPath }) // Include both directory and filename in request body
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            return response.text(); // If response is OK, return the response text
-                        } else {
-                            throw new Error('Error: ' + response.statusText); // Otherwise, throw an error
-                        }
-                    })
-                    .then(data => {
-                        console.log(data); // Log the response data
-                        alert("Broadcast started for file: " + selectedFilename); // Display success message
-                    })
-                    .catch(error => {
-                        console.error('Error:', error); // Log any errors that occur
-                        alert("Error: " + error.message); // Display error message
-                    });
+                var selectedFilename = document.getElementById("selectWigle").value;
+                if (selectedFilename && directoryPath) {
+                    sendFetch('/start_broadcast', 'POST', { filename: selectedFilename, directory: directoryPath })
+                        .then(data => {
+                            console.log(data);
+                            alert("Broadcast started for file: " + selectedFilename);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert("Error: " + error.message);
+                        });
                 } else {
-                    alert("Please select both a directory and a filename."); // Display alert if directory or filename is missing
+                    alert("Please select both a directory and a filename.");
                 }
             });
-    
+
             // Event listener for "Stop Broadcast" button
             document.getElementById("stopBroadcastButton").addEventListener("click", function(event) {
                 event.preventDefault();
-                fetch('/stop_broadcast', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(response => {
-                    if (response.ok) {
-                        return response.text();
-                    } else {
-                        throw new Error('Error: ' + response.statusText);
-                    }
-                })
-                .then(data => {
-                    console.log(data);
-                    alert("Broadcast stopped successfully");
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert("Error: " + error.message);
-                });
+                sendFetch('/stop_broadcast', 'POST', {})
+                    .then(data => {
+                        console.log(data);
+                        alert("Broadcast stopped successfully");
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert("Error: " + error.message);
+                    });
             });
-    
+
             // Event listener for retrieving the list of files
             document.getElementById("directoryForm").addEventListener("submit", function(event) {
-                event.preventDefault(); // Prevent default form submission
+                event.preventDefault();
                 var directoryPath = document.getElementById("directory").value;
                 fetch('/list_wigle_files?directory=' + encodeURIComponent(directoryPath))
-                .then(response => {
-                    if (response.ok) {
-                        return response.json(); // If response is OK, return the JSON data
-                    } else {
-                        throw new Error('Error: ' + response.statusText); // Otherwise, throw an error
-                    }
-                })
-                .then(data => {
-                    updateDropdownList(data.files); // Call function to update dropdown list
-                })
-                .catch(error => {
-                    console.error('Error:', error); // Log any errors that occur
-                    alert("Error: " + error.message); // Display error message
-                });
+                    .then(response => {
+                        if (response.ok) {
+                            return response.json();
+                        } else {
+                            throw new Error('Error: ' + response.statusText);
+                        }
+                    })
+                    .then(data => {
+                        updateDropdownList(data.files);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert("Error: " + error.message);
+                    });
             });
-    
+
             // Function to update the dropdown list of files
             function updateDropdownList(files) {
                 var selectWigle = document.getElementById("selectWigle");
-                selectWigle.innerHTML = ""; // Clear existing options
+                selectWigle.innerHTML = "";
                 files.forEach(function(file) {
                     var option = document.createElement("option");
                     option.value = file;
                     option.text = file;
-                    selectWigle.appendChild(option); // Append new option to dropdown list
+                    selectWigle.appendChild(option);
                 });
             }
-    
+
             // Event listener for adding MAC to Whitelist
             document.getElementById("addToWhitelistButton").addEventListener("click", function(event) {
                 event.preventDefault();
@@ -403,34 +385,20 @@
                 if (macAddress !== "") {
                     addToList('whitelistDropdown', macAddress);
                     document.getElementById("macWhitelistInput").value = "";
-                    // Send request to backend to add MAC address to whitelist
-                    fetch('/add_to_whitelist', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ mac_address: macAddress }) // Include MAC address in request body
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            return response.json(); // If response is OK, return the JSON data
-                        } else {
-                            throw new Error('Error: ' + response.statusText); // Otherwise, throw an error
-                        }
-                    })
-                    .then(data => {
-                        console.log(data); // Log the response data
-                        alert(data.message); // Display success message or error message
-                    })
-                    .catch(error => {
-                        console.error('Error:', error); // Log any errors that occur
-                        alert("Error: " + error.message); // Display error message
-                    });
+                    sendFetch('/add_to_whitelist', 'POST', { mac_address: macAddress })
+                        .then(data => {
+                            console.log(data);
+                            alert(data.message);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert("Error: " + error.message);
+                        });
                 } else {
                     alert("Please enter a MAC address.");
                 }
             });
-    
+
             // Event listener for removing MAC from Whitelist
             document.getElementById("removeFromWhitelistButton").addEventListener("click", function(event) {
                 event.preventDefault();
@@ -439,83 +407,49 @@
                 if (selectedOption) {
                     var macAddress = selectedOption.value;
                     selectDropdown.removeChild(selectedOption);
-                // Send request to backend to remove MAC address from whitelist
-                fetch('/remove_from_whitelist', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ mac_address: macAddress }) // Include MAC address in request body
-                })
-                .then(response => {
-                    if (response.ok) {
-                        return response.json(); // If response is OK, return the JSON data
-                    } else {
-                        throw new Error('Error: ' + response.statusText); // Otherwise, throw an error
-                    }
-                })
-                .then(data => {
-                    console.log(data); // Log the response data
-                    alert(data.message); // Display success message or error message
-                })
-                .catch(error => {
-                    console.error('Error:', error); // Log any errors that occur
-                    alert("Error: " + error.message); // Display error message
-                });
-            } else {
-                alert("Please select a MAC address from the whitelist."); // Prompt user to select a MAC address
-            }
-        });
-    
+                    sendFetch('/remove_from_whitelist', 'POST', { mac_address: macAddress })
+                        .then(data => {
+                            console.log(data);
+                            alert(data.message);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert("Error: " + error.message);
+                        });
+                } else {
+                    alert("Please select a MAC address from the whitelist.");
+                }
+            });
+
             // Event listener for adding MAC to Blacklist
             document.getElementById("addToBlacklistButton").addEventListener("click", function(event) {
                 event.preventDefault();
                 var macAddress = document.getElementById("macBlacklistInput").value.trim();
                 var argbValue = document.getElementById("argbBlacklistInput").value.trim();
-                console.log("MAC Address:", macAddress); // Debugging statement
-                console.log("ARGB Value:", argbValue); // Debugging statement
                 if (macAddress !== "" && argbValue !== "") {
                     addToList('blacklistDropdown', macAddress, argbValue);
                     document.getElementById("macBlacklistInput").value = "";
                     document.getElementById("argbBlacklistInput").value = "";
-                    addToBlacklist(macAddress, argbValue);
+                    sendFetch('/add_to_blacklist', 'POST', { mac_address: macAddress, argb_value: argbValue })
+                        .then(data => {
+                            console.log(data);
+                            alert(data.message);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert("Error: " + error.message);
+                        });
                 } else {
                     alert("Please enter both a MAC address and an ARGB value.");
                 }
             });
-    
+
             // Event listener for removing MAC from Blacklist
             document.getElementById("removeFromBlacklistButton").addEventListener("click", function(event) {
                 event.preventDefault();
                 removeFromList('blacklistDropdown');
             });
-    
-            // Function to add MAC address to blacklist
-            function addToBlacklist(macAddress, argbValue) {
-                fetch('/add_to_blacklist', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ mac_address: macAddress, argb_value: argbValue }) // Correct keys
-                })
-                .then(response => {
-                    if (response.ok) {
-                        return response.json(); // If response is OK, return the JSON data
-                    } else {
-                        throw new Error('Error: ' + response.statusText); // Otherwise, throw an error
-                    }
-                })
-                .then(data => {
-                    console.log(data); // Log the response data
-                    alert(data.message); // Display success message
-                })
-                .catch(error => {
-                    console.error('Error:', error); // Log any errors that occur
-                    alert("Error: " + error.message); // Display error message
-                });
-            }
-    
+
             // Function to add MAC address to the dropdown list
             function addToList(dropdownId, macAddress, argbValue) {
                 var selectDropdown = document.getElementById(dropdownId);
@@ -525,7 +459,7 @@
                 option.setAttribute("data-argb", argbValue);
                 selectDropdown.appendChild(option);
             }
-    
+
             // Function to remove selected MAC address from dropdown list and blacklist
             function removeFromList(dropdownId) {
                 var selectDropdown = document.getElementById(dropdownId);
@@ -533,39 +467,19 @@
                 if (selectedOption) {
                     var macAddress = selectedOption.value;
                     var data = { mac_address: macAddress };
-
-                    // Send a request to the server to remove the MAC address from the blacklist
-                    fetch('/remove_from_blacklist', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(data)
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            return response.json();
-                        } else {
-                            throw new Error('Error: ' + response.statusText);
-                        }
-                    })
-                    .then(data => {
-                        console.log(data); // Log the response data
-                        alert(data.message); // Display success message or error message
-                    })
-                    .catch(error => {
-                        console.error('Error:', error); // Log any errors that occur
-                        alert("Error: " + error.message); // Display error message
-                    });
-
-                    // Remove the selected option from the dropdown list
+                    sendFetch('/remove_from_blacklist', 'POST', data)
+                        .then(data => {
+                            console.log(data);
+                            alert(data.message);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert("Error: " + error.message);
+                        });
                     selectDropdown.removeChild(selectedOption);
                 }
             }
-
         });
     </script>
-                    
-
 </body>
 </html>

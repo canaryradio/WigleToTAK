@@ -6,6 +6,7 @@ import time
 from flask import Flask, request, jsonify, render_template
 import os
 import threading
+from itertools import islice
 
 app = Flask(__name__)
 
@@ -20,6 +21,7 @@ tak_server_port = '6666'
 tak_multicast_state = True
 whitelisted_macs = set()
 blacklisted_macs = {}
+analysis_mode = 'realtime'  # Default mode
 
 @app.route('/')
 def index():
@@ -28,35 +30,41 @@ def index():
 @app.route('/update_settings', methods=['POST'])
 def update_settings():
     data = request.json
-    global tak_server_ip, tak_server_port, tak_multicast_state
-    tak_server_ip = data.get('tak_server_ip')
-    tak_server_port = data.get('tak_server_port')
-    tak_multicast = data.get('takMulticast')
+    global tak_server_ip, tak_server_port, tak_multicast_state, analysis_mode
+    tak_server_ip = data.get('tak_server_ip', tak_server_ip)
+    tak_server_port = data.get('tak_server_port', tak_server_port)
+    tak_multicast = data.get('takMulticast', tak_multicast_state)
+    mode = data.get('mode', analysis_mode)
 
-    if tak_server_ip is not None and tak_server_port is not None:
-        tak_server_ip = tak_server_ip
-        tak_server_port = tak_server_port
+    if tak_server_ip and tak_server_port:
         logger.info(f"TAK Server IP and Port updated successfully. New IP: {tak_server_ip}, New Port: {tak_server_port}")
     else:
-        logging.error("Missing TAK Server IP or Port in the request")
+        logger.error("Missing TAK Server IP or Port in the request")
 
-    if tak_multicast is not None:
-        tak_multicast_state = tak_multicast
-        logger.info(f"TAK Multicast state updated successfully: {tak_multicast_state}")
+    tak_multicast_state = tak_multicast
+    logger.info(f"TAK Multicast state updated successfully: {tak_multicast_state}")
+
+    if mode in ['realtime', 'postcollection']:
+        analysis_mode = mode
+        logger.info(f"Analysis mode updated successfully: {analysis_mode}")
     else:
-        logging.error("Missing TAK Multicast state in the request")
+        logger.error("Invalid analysis mode in the request")
 
-    return 'Settings updated successfully!', 200
+    return jsonify({'message': 'Settings updated successfully!'}), 200
 
 @app.route('/list_wigle_files', methods=['GET'])
 def list_wigle_files():
     directory = request.args.get('directory')
     if directory:
-        files = [f for f in os.listdir(directory) if f.endswith('.wiglecsv')]
-        sorted_files = sorted(files, reverse=True)
-        return jsonify({'files': sorted_files})
+        try:
+            files = [f for f in os.listdir(directory) if f.endswith('.wiglecsv')]
+            sorted_files = sorted(files, reverse=True)
+            return jsonify({'files': sorted_files})
+        except Exception as e:
+            logger.error(f"Error listing files in directory: {e}")
+            return jsonify({'error': 'Error listing files in directory'}), 500
     else:
-        return jsonify({'error': 'Directory parameter is missing'})
+        return jsonify({'error': 'Directory parameter is missing'}), 400
 
 @app.route('/stop_broadcast', methods=['POST'])
 def stop_broadcast():
@@ -75,7 +83,6 @@ def start_broadcast():
     
     if directory and filename:
         logger.info(f'Starting broadcast for file: {filename}')
-        # Construct full file path
         full_path = os.path.join(directory, filename)
         if os.path.exists(full_path):
             logger.info(f'File path: {full_path}')
@@ -84,9 +91,9 @@ def start_broadcast():
             broadcast_thread.start()  # Start broadcasting in a separate thread
             return jsonify({'message': 'Broadcast started for file: ' + filename})
         else:
-            return jsonify({'error': 'File does not exist'})
+            return jsonify({'error': 'File does not exist'}), 404
     else:
-        return jsonify({'error': 'Directory or filename parameter is missing'})
+        return jsonify({'error': 'Directory or filename parameter is missing'}), 400
 
 @app.route('/add_to_whitelist', methods=['POST'])
 def add_to_whitelist():
@@ -96,7 +103,7 @@ def add_to_whitelist():
         whitelisted_macs.add(mac_address)
         return jsonify({'message': f'MAC address {mac_address} added to whitelist'})
     else:
-        return jsonify({'error': 'Missing MAC address in request'})
+        return jsonify({'error': 'Missing MAC address in request'}), 400
 
 @app.route('/remove_from_whitelist', methods=['POST'])
 def remove_from_whitelist():
@@ -107,9 +114,9 @@ def remove_from_whitelist():
             whitelisted_macs.remove(mac_address)
             return jsonify({'message': f'MAC address {mac_address} removed from whitelist'})
         else:
-            return jsonify({'error': f'MAC address {mac_address} not found in whitelist'})
+            return jsonify({'error': f'MAC address {mac_address} not found in whitelist'}), 404
     else:
-        return jsonify({'error': 'Missing MAC address in request'})
+        return jsonify({'error': 'Missing MAC address in request'}), 400
 
 @app.route('/add_to_blacklist', methods=['POST'])
 def add_to_blacklist():
@@ -118,9 +125,9 @@ def add_to_blacklist():
     argb_value = data.get('argb_value')
     if mac_address and argb_value:
         blacklisted_macs[mac_address] = argb_value
-        return jsonify({'message': f'MAC address {mac_address} with ARBG value {argb_value} added to blacklist'})
+        return jsonify({'message': f'MAC address {mac_address} with ARGB value {argb_value} added to blacklist'})
     else:
-        return jsonify({'error': 'Missing MAC address or ARBG value in request'})
+        return jsonify({'error': 'Missing MAC address or ARGB value in request'}), 400
 
 @app.route('/remove_from_blacklist', methods=['POST'])
 def remove_from_blacklist():
@@ -131,9 +138,9 @@ def remove_from_blacklist():
             del blacklisted_macs[mac_address]
             return jsonify({'message': f'MAC address {mac_address} removed from blacklist'})
         else:
-            return jsonify({'error': f'MAC address {mac_address} not found in blacklist'})
+            return jsonify({'error': f'MAC address {mac_address} not found in blacklist'}), 404
     else:
-        return jsonify({'error': 'Missing MAC address in request'})
+        return jsonify({'error': 'Missing MAC address in request'}), 400
 
 def read_file(filename, start_position):
     with open(filename, 'r') as file:
@@ -142,54 +149,50 @@ def read_file(filename, start_position):
             yield line.strip().split(',')
 
 def broadcast_file(full_path, multicast_group='239.2.3.1', port=6969):
-    logger.info(f'Broadcasting COT XML packets for file: {full_path}')
-    logger.info(f'Multicast group: {multicast_group}, Port: {port}')
-    if tak_multicast_state:
-        logger.info(f'Sending packets to multicast group: {multicast_group}, Port: {port}')
+    if analysis_mode == 'realtime':
+        broadcast_file_realtime(full_path, multicast_group, port)
     else:
-        logger.info(f'Multicast disabled. Not sending packets to multicast.')
-    # Create a UDP socket
+        broadcast_file_postcollection(full_path, multicast_group, port)
+
+def broadcast_file_realtime(full_path, multicast_group='239.2.3.1', port=6969):
+    logger.info(f'Broadcasting in real-time mode for file: {full_path}')
+    setup_socket_and_broadcast(full_path, multicast_group, port, chunk_size=1)
+
+def broadcast_file_postcollection(full_path, multicast_group='239.2.3.1', port=6969, chunk_size=100):
+    logger.info(f'Broadcasting in post-collection mode for file: {full_path}')
+    setup_socket_and_broadcast(full_path, multicast_group, port, chunk_size)
+
+def setup_socket_and_broadcast(full_path, multicast_group, port, chunk_size):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-    # Set a timeout for the socket
     sock.settimeout(0.2)
-
-    # Create a multicast TTL value
     ttl = struct.pack('b', 1)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
 
-    last_position = 0
-    processed_macs = set()
-    while broadcasting:
-        logger.debug(f"Broadcasting CoT XML packets from file: {full_path}, last position: {last_position}")
-        for fields in read_file(full_path, last_position):
-            if len(fields) >= 10:
-                mac, ssid, authmode, firstseen, channel, rssi, currentlatitude, currentlongitude, altitudemeters, accuracymeters, device_type = fields[:11]
-                if mac not in processed_macs and (not whitelisted_macs or mac not in whitelisted_macs):
-                    cot_xml_payload = create_cot_xml_payload_point(mac, ssid, firstseen, channel, rssi, currentlatitude, currentlongitude, altitudemeters, accuracymeters, authmode, device_type)
-                    logger.debug(f"Sending CoT XML packet: {cot_xml_payload}")
-                    # Send the CoT XML packet
-                    if tak_multicast_state:
-                        # Send to multicast if multicast is enabled
-                        sock.sendto(cot_xml_payload.encode(), (multicast_group, port))
-                    
-                    if tak_server_ip and tak_server_port:
-                        # Send to user-defined IP and Port if available
-                        sock.sendto(cot_xml_payload.encode(), (tak_server_ip, int(tak_server_port)))
+    with open(full_path, 'r') as file:
+        processed_macs = set()
+        while broadcasting:
+            lines = list(islice(file, chunk_size))
+            if not lines:
+                break
 
-                    processed_macs.add(mac)  # Add MAC address to processed set
-        # Update the last position
-        last_position = os.path.getsize(full_path)
-        time.sleep(0.1)
-        
-    # Close the socket
+            for line in lines:
+                fields = line.strip().split(',')
+                if len(fields) >= 10:
+                    mac, ssid, authmode, firstseen, channel, rssi, currentlatitude, currentlongitude, altitudemeters, accuracymeters, device_type = fields[:11]
+                    if mac not in processed_macs and (not whitelisted_macs or mac not in whitelisted_macs):
+                        cot_xml_payload = create_cot_xml_payload_point(mac, ssid, firstseen, channel, rssi, currentlatitude, currentlongitude, altitudemeters, accuracymeters, authmode, device_type)
+                        if tak_multicast_state:
+                            sock.sendto(cot_xml_payload.encode(), (multicast_group, port))
+                        if tak_server_ip and tak_server_port:
+                            sock.sendto(cot_xml_payload.encode(), (tak_server_ip, int(tak_server_port)))
+
+                        processed_macs.add(mac)
+            time.sleep(0.1)
     sock.close()
 
 def create_cot_xml_payload_point(mac, ssid, firstseen, channel, rssi, currentlatitude, currentlongitude, altitudemeters, accuracymeters, authmode, device_type):
     remarks = f"Channel: {channel}, RSSI: {rssi}, AltitudeMeters: {altitudemeters}, AccuracyMeters: {accuracymeters}, Authentication: {authmode}, Device: {device_type}, MAC: {mac}"
-    
     color_argb = blacklisted_macs.get(mac, "-65281")
-    
     return f'''<?xml version="1.0"?>
     <event version="2.0" uid="{mac}-{firstseen}" type="b-m-p-s-m"
     time="{datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.995Z')}"
