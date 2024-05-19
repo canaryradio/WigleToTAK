@@ -160,6 +160,8 @@
                 <button id="analysisModeToggle" class="realtime-state">Real-time</button>
             </div>
             <div class="group-container">
+                <label for="ssidWhitelistInput">SSID Whitelist:</label>
+                <input type="text" id="ssidWhitelistInput" placeholder="Enter SSID">
                 <label for="macWhitelistInput">MAC Whitelist:</label>
                 <input type="text" id="macWhitelistInput" placeholder="Enter MAC address">
                 <button id="addToWhitelistButton" type="button">Add to Whitelist</button>
@@ -169,6 +171,8 @@
                 </select>
             </div>
             <div class="group-container">
+                <label for="ssidBlacklistInput">SSID Blacklist:</label>
+                <input type="text" id="ssidBlacklistInput" placeholder="Enter SSID">
                 <label for="macBlacklistInput">MAC Blacklist:</label>
                 <input type="text" id="macBlacklistInput" placeholder="Enter MAC address">
                 <label for="argbBlacklistInput">ARGB Color:</label>
@@ -206,10 +210,10 @@
             <div>- The default Analysis Mode is Real-Time. If processing large files in a post-collection situation toggle to Post-Collection.</div>
             </div>
             <div class="line-item-wigleWhitelist">
-                - MAC Whitelist is a field to enter MAC addresses you do not want to display.
+                - SSID or MAC Whitelist is a field to enter SSIDs or MAC addresses you do not want to display.
             </div>
             <div class="line-item-wigleBlacklist">
-                - MAC Blacklist is a field to enter MAC addresses you want to display in a different color.
+                - SSID or MAC Blacklist is a field to enter SSIDs or MAC addresses you want to display in a different color.
                 <div>* -65281 is purple, which is the default color... so don't use that.</div>
                 <div>* -256 is yellow.</div>
                 <div>* -65536 is red.</div>
@@ -378,14 +382,27 @@
                 });
             }
 
-            // Event listener for adding MAC to Whitelist
+            // Event listener for adding SSID or MAC to Whitelist
             document.getElementById("addToWhitelistButton").addEventListener("click", function(event) {
                 event.preventDefault();
-                var macAddress = document.getElementById("macWhitelistInput").value.trim();
-                if (macAddress !== "") {
-                    addToList('whitelistDropdown', macAddress);
+                var ssid = document.getElementById("ssidWhitelistInput").value.trim();
+                var mac = document.getElementById("macWhitelistInput").value.trim();
+                if (ssid !== "") {
+                    addToList('whitelistDropdown', ssid);
+                    document.getElementById("ssidWhitelistInput").value = "";
+                    sendFetch('/add_to_whitelist', 'POST', { ssid: ssid })
+                        .then(data => {
+                            console.log(data);
+                            alert(data.message);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert("Error: " + error.message);
+                        });
+                } else if (mac !== "") {
+                    addToList('whitelistDropdown', mac);
                     document.getElementById("macWhitelistInput").value = "";
-                    sendFetch('/add_to_whitelist', 'POST', { mac_address: macAddress })
+                    sendFetch('/add_to_whitelist', 'POST', { mac: mac })
                         .then(data => {
                             console.log(data);
                             alert(data.message);
@@ -395,19 +412,19 @@
                             alert("Error: " + error.message);
                         });
                 } else {
-                    alert("Please enter a MAC address.");
+                    alert("Please enter an SSID or MAC address.");
                 }
             });
 
-            // Event listener for removing MAC from Whitelist
+            // Event listener for removing SSID or MAC from Whitelist
             document.getElementById("removeFromWhitelistButton").addEventListener("click", function(event) {
                 event.preventDefault();
                 var selectDropdown = document.getElementById('whitelistDropdown');
                 var selectedOption = selectDropdown.options[selectDropdown.selectedIndex];
                 if (selectedOption) {
-                    var macAddress = selectedOption.value;
+                    var ssidOrMac = selectedOption.value;
                     selectDropdown.removeChild(selectedOption);
-                    sendFetch('/remove_from_whitelist', 'POST', { mac_address: macAddress })
+                    sendFetch('/remove_from_whitelist', 'POST', { ssid: ssidOrMac, mac: ssidOrMac })
                         .then(data => {
                             console.log(data);
                             alert(data.message);
@@ -417,20 +434,34 @@
                             alert("Error: " + error.message);
                         });
                 } else {
-                    alert("Please select a MAC address from the whitelist.");
+                    alert("Please select an SSID or MAC address from the whitelist.");
                 }
             });
 
-            // Event listener for adding MAC to Blacklist
+            // Event listener for adding SSID or MAC to Blacklist
             document.getElementById("addToBlacklistButton").addEventListener("click", function(event) {
                 event.preventDefault();
-                var macAddress = document.getElementById("macBlacklistInput").value.trim();
+                var ssid = document.getElementById("ssidBlacklistInput").value.trim();
+                var mac = document.getElementById("macBlacklistInput").value.trim();
                 var argbValue = document.getElementById("argbBlacklistInput").value.trim();
-                if (macAddress !== "" && argbValue !== "") {
-                    addToList('blacklistDropdown', macAddress, argbValue);
+                if (ssid !== "" && argbValue !== "") {
+                    addToList('blacklistDropdown', ssid, argbValue);
+                    document.getElementById("ssidBlacklistInput").value = "";
+                    document.getElementById("argbBlacklistInput").value = "";
+                    sendFetch('/add_to_blacklist', 'POST', { ssid: ssid, argb_value: argbValue })
+                        .then(data => {
+                            console.log(data);
+                            alert(data.message);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert("Error: " + error.message);
+                        });
+                } else if (mac !== "" && argbValue !== "") {
+                    addToList('blacklistDropdown', mac, argbValue);
                     document.getElementById("macBlacklistInput").value = "";
                     document.getElementById("argbBlacklistInput").value = "";
-                    sendFetch('/add_to_blacklist', 'POST', { mac_address: macAddress, argb_value: argbValue })
+                    sendFetch('/add_to_blacklist', 'POST', { mac: mac, argb_value: argbValue })
                         .then(data => {
                             console.log(data);
                             alert(data.message);
@@ -440,34 +471,33 @@
                             alert("Error: " + error.message);
                         });
                 } else {
-                    alert("Please enter both a MAC address and an ARGB value.");
+                    alert("Please enter an SSID or MAC address and an ARGB value.");
                 }
             });
 
-            // Event listener for removing MAC from Blacklist
+            // Event listener for removing SSID or MAC from Blacklist
             document.getElementById("removeFromBlacklistButton").addEventListener("click", function(event) {
                 event.preventDefault();
                 removeFromList('blacklistDropdown');
             });
 
-            // Function to add MAC address to the dropdown list
-            function addToList(dropdownId, macAddress, argbValue) {
+            // Function to add SSID or MAC to the dropdown list
+            function addToList(dropdownId, ssidOrMac, argbValue) {
                 var selectDropdown = document.getElementById(dropdownId);
                 var option = document.createElement("option");
-                option.value = macAddress;
-                option.text = macAddress;
+                option.value = ssidOrMac;
+                option.text = ssidOrMac;
                 option.setAttribute("data-argb", argbValue);
                 selectDropdown.appendChild(option);
             }
 
-            // Function to remove selected MAC address from dropdown list and blacklist
+            // Function to remove selected SSID or MAC from dropdown list and blacklist
             function removeFromList(dropdownId) {
                 var selectDropdown = document.getElementById(dropdownId);
                 var selectedOption = selectDropdown.options[selectDropdown.selectedIndex];
                 if (selectedOption) {
-                    var macAddress = selectedOption.value;
-                    var data = { mac_address: macAddress };
-                    sendFetch('/remove_from_blacklist', 'POST', data)
+                    var ssidOrMac = selectedOption.value;
+                    sendFetch('/remove_from_blacklist', 'POST', { ssid: ssidOrMac, mac: ssidOrMac })
                         .then(data => {
                             console.log(data);
                             alert(data.message);

@@ -19,7 +19,9 @@ broadcast_thread = None
 tak_server_ip = '0.0.0.0'
 tak_server_port = '6666'
 tak_multicast_state = True
+whitelisted_ssids = set()
 whitelisted_macs = set()
+blacklisted_ssids = {}
 blacklisted_macs = {}
 analysis_mode = 'realtime'  # Default mode
 
@@ -98,49 +100,71 @@ def start_broadcast():
 @app.route('/add_to_whitelist', methods=['POST'])
 def add_to_whitelist():
     data = request.json
-    mac_address = data.get('mac_address')
-    if mac_address:
-        whitelisted_macs.add(mac_address)
-        return jsonify({'message': f'MAC address {mac_address} added to whitelist'})
+    ssid = data.get('ssid')
+    mac = data.get('mac')
+    if ssid:
+        whitelisted_ssids.add(ssid)
+        return jsonify({'message': f'SSID {ssid} added to whitelist'})
+    elif mac:
+        whitelisted_macs.add(mac)
+        return jsonify({'message': f'MAC address {mac} added to whitelist'})
     else:
-        return jsonify({'error': 'Missing MAC address in request'}), 400
+        return jsonify({'error': 'Missing SSID or MAC address in request'}), 400
 
 @app.route('/remove_from_whitelist', methods=['POST'])
 def remove_from_whitelist():
     data = request.json
-    mac_address = data.get('mac_address')
-    if mac_address:
-        if mac_address in whitelisted_macs:
-            whitelisted_macs.remove(mac_address)
-            return jsonify({'message': f'MAC address {mac_address} removed from whitelist'})
+    ssid = data.get('ssid')
+    mac = data.get('mac')
+    if ssid:
+        if ssid in whitelisted_ssids:
+            whitelisted_ssids.remove(ssid)
+            return jsonify({'message': f'SSID {ssid} removed from whitelist'})
         else:
-            return jsonify({'error': f'MAC address {mac_address} not found in whitelist'}), 404
+            return jsonify({'error': f'SSID {ssid} not found in whitelist'}), 404
+    elif mac:
+        if mac in whitelisted_macs:
+            whitelisted_macs.remove(mac)
+            return jsonify({'message': f'MAC address {mac} removed from whitelist'})
+        else:
+            return jsonify({'error': f'MAC address {mac} not found in whitelist'}), 404
     else:
-        return jsonify({'error': 'Missing MAC address in request'}), 400
+        return jsonify({'error': 'Missing SSID or MAC address in request'}), 400
 
 @app.route('/add_to_blacklist', methods=['POST'])
 def add_to_blacklist():
     data = request.json
-    mac_address = data.get('mac_address')
+    ssid = data.get('ssid')
+    mac = data.get('mac')
     argb_value = data.get('argb_value')
-    if mac_address and argb_value:
-        blacklisted_macs[mac_address] = argb_value
-        return jsonify({'message': f'MAC address {mac_address} with ARGB value {argb_value} added to blacklist'})
+    if ssid and argb_value:
+        blacklisted_ssids[ssid] = argb_value
+        return jsonify({'message': f'SSID {ssid} with ARBG value {argb_value} added to blacklist'})
+    elif mac and argb_value:
+        blacklisted_macs[mac] = argb_value
+        return jsonify({'message': f'MAC address {mac} with ARBG value {argb_value} added to blacklist'})
     else:
-        return jsonify({'error': 'Missing MAC address or ARGB value in request'}), 400
+        return jsonify({'error': 'Missing SSID or MAC address or ARBG value in request'}), 400
 
 @app.route('/remove_from_blacklist', methods=['POST'])
 def remove_from_blacklist():
     data = request.json
-    mac_address = data.get('mac_address')
-    if mac_address:
-        if mac_address in blacklisted_macs:
-            del blacklisted_macs[mac_address]
-            return jsonify({'message': f'MAC address {mac_address} removed from blacklist'})
+    ssid = data.get('ssid')
+    mac = data.get('mac')
+    if ssid:
+        if ssid in blacklisted_ssids:
+            del blacklisted_ssids[ssid]
+            return jsonify({'message': f'SSID {ssid} removed from blacklist'})
         else:
-            return jsonify({'error': f'MAC address {mac_address} not found in blacklist'}), 404
+            return jsonify({'error': f'SSID {ssid} not found in blacklist'}), 404
+    elif mac:
+        if mac in blacklisted_macs:
+            del blacklisted_macs[mac]
+            return jsonify({'message': f'MAC address {mac} removed from blacklist'})
+        else:
+            return jsonify({'error': f'MAC address {mac} not found in blacklist'}), 404
     else:
-        return jsonify({'error': 'Missing MAC address in request'}), 400
+        return jsonify({'error': 'Missing SSID or MAC address in request'}), 400
 
 def read_file(filename, start_position):
     with open(filename, 'r') as file:
@@ -169,7 +193,7 @@ def setup_socket_and_broadcast(full_path, multicast_group, port, chunk_size):
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
 
     with open(full_path, 'r') as file:
-        processed_macs = set()
+        processed_entries = set()
         while broadcasting:
             lines = list(islice(file, chunk_size))
             if not lines:
@@ -179,20 +203,23 @@ def setup_socket_and_broadcast(full_path, multicast_group, port, chunk_size):
                 fields = line.strip().split(',')
                 if len(fields) >= 10:
                     mac, ssid, authmode, firstseen, channel, rssi, currentlatitude, currentlongitude, altitudemeters, accuracymeters, device_type = fields[:11]
-                    if mac not in processed_macs and (not whitelisted_macs or mac not in whitelisted_macs):
+                    if (mac not in processed_entries and ssid not in processed_entries) and \
+                       (not whitelisted_ssids or ssid not in whitelisted_ssids) and \
+                       (not whitelisted_macs or mac not in whitelisted_macs):
                         cot_xml_payload = create_cot_xml_payload_point(mac, ssid, firstseen, channel, rssi, currentlatitude, currentlongitude, altitudemeters, accuracymeters, authmode, device_type)
                         if tak_multicast_state:
                             sock.sendto(cot_xml_payload.encode(), (multicast_group, port))
                         if tak_server_ip and tak_server_port:
                             sock.sendto(cot_xml_payload.encode(), (tak_server_ip, int(tak_server_port)))
 
-                        processed_macs.add(mac)
+                        processed_entries.add(mac)
+                        processed_entries.add(ssid)
             time.sleep(0.1)
     sock.close()
 
 def create_cot_xml_payload_point(mac, ssid, firstseen, channel, rssi, currentlatitude, currentlongitude, altitudemeters, accuracymeters, authmode, device_type):
     remarks = f"Channel: {channel}, RSSI: {rssi}, AltitudeMeters: {altitudemeters}, AccuracyMeters: {accuracymeters}, Authentication: {authmode}, Device: {device_type}, MAC: {mac}"
-    color_argb = blacklisted_macs.get(mac, "-65281")
+    color_argb = blacklisted_ssids.get(ssid, blacklisted_macs.get(mac, "-65281"))
     return f'''<?xml version="1.0"?>
     <event version="2.0" uid="{mac}-{firstseen}" type="b-m-p-s-m"
     time="{datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.995Z')}"
