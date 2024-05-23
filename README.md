@@ -67,18 +67,21 @@ TAK Server IP is the IP address of your TAK Server. The port should be whichever
 
 
 <h2>Wigle CSV Selection</h2>
-Wigle CSV logs directory should be your absolute path to wherever your .wiglecsv files are going to. In Kismet you can set this in the config files. I do not recommend sending to a directory owned by root or requiring sudo priveleges for this application. /home/{YOUR USER} for example is a easy choice. When you click "submit" all of the files ending with .wiglecsv will show in the drop down list. Latest will be at the top. When you click "start" the file will be read and all packets in the file will be parsed, converted to CoT XML, and sent to whatever endpoints you have enabled.<br>
+Wigle CSV logs directory should be your absolute path to wherever your .wiglecsv files are going to. In Kismet you can set this in the config files. I do not recommend sending to a directory owned by root or requiring sudo priveleges for this application. /home/{YOUR USER} for example is a easy choice. When you click "submit" all of the files ending with .wiglecsv will show in the drop down list. Latest will be at the top. When you click "start" the file will be read and all packets in the file will be parsed, converted to CoT XML, and sent to whatever endpoints you have enabled.<br> Analysis Mode is the selection between Real-Time and Post-Collection. The default is Real-time. Post-Collection handles large files (lots of devices) better.<br>
   
-<img width="510" alt="Screenshot 2024-03-10 at 11 53 34 PM" src="https://github.com/SignalMedic/WigleToTAK/assets/127666889/e5bacf15-d163-4395-b63d-b34a7f420c68">
+<img width="513" alt="Screenshot 2024-05-19 at 2 27 08 PM" src="https://github.com/canaryradio/WigleToTAK/assets/127666889/d53ed71e-808f-4709-a210-0d991093c537">
+
 
 
 <h2>MAC Whitelist</h2>
-MAC Whitelist is for devices that you don't want to display or don't care to display. Your own for instance. To remove one select it from the drop down and click "Remove from Whitelist".<br>
+MAC Whitelist is for devices that you don't want to display or don't care to display. Your own for instance. Add devices to the Whitelist by SSID or MAC. To remove one select it from the drop down and click "Remove from Whitelist".<br>
 
-<img width="511" alt="Screenshot 2024-03-10 at 11 53 53 PM" src="https://github.com/SignalMedic/WigleToTAK/assets/127666889/643fbc22-9be6-43cb-947b-2dbd65a6b204">
+<img width="509" alt="Screenshot 2024-05-19 at 2 25 51 PM" src="https://github.com/canaryradio/WigleToTAK/assets/127666889/689aafe8-3a71-453a-9a5b-718ae261dfd2">
+
 
 
 <h2>MAC Blacklist</h2>
-MAC Blacklist is for devices that you want to display in a color other than the default color. You need to select a ARGB value other than -65281 (purple) because that is the default. To remove select it from the drop down and click "Remove from Blacklist".<br>
+MAC Blacklist is for devices that you want to display in a color other than the default color. You need to select a ARGB value other than -65281 (purple) because that is the default. To remove select it from the drop down and click "Remove from Blacklist".<br> Add devices to the Blacklist by SSID and by MAC.<br>
 
-<img width="516" alt="Screenshot 2024-03-10 at 11 54 06 PM" src="https://github.com/SignalMedic/WigleToTAK/assets/127666889/c8e60d06-5ba6-48ff-a97c-ed7ac05dfd96">
+<img width="519" alt="Screenshot 2024-05-19 at 2 23 45 PM" src="https://github.com/canaryradio/WigleToTAK/assets/127666889/5801450e-a06e-49ed-97e7-194ebb49eaa5">
+
